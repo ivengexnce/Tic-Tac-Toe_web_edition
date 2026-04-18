@@ -934,7 +934,7 @@ function showResult(winner, name) {
   const title = document.getElementById('result-title');
   const sub = document.getElementById('result-subtitle');
   if (winner) {
-    emoji.textContent = winner === 'X' ? '🏅' : '🔵';
+    emoji.textContent = winner === 'X' ? '🏅' ;
     title.textContent = `${name} Wins!`;
     title.style.color = winner === 'X' ? 'var(--x-color)' : 'var(--o-color)';
     sub.textContent = 'WELL PLAYED';
