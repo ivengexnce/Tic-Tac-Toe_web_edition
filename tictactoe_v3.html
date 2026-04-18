@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tic Tac Toe</title>
+<title>Tic Tac Toe - Python GUI Web Edition</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -45,6 +45,14 @@ body{background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;min-hei
   display:flex;flex-direction:column;align-items:center;
   padding:3.5rem 1.5rem 3rem;text-align:center;position:relative;overflow:hidden;
 }
+  .header .tagline {
+    font-family: 'Times New Roman', Serif;
+    font-size: 1rem;
+    color: white;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
 .hero-glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:500px;height:350px;pointer-events:none;background:radial-gradient(ellipse,rgba(139,106,240,0.1) 0%,transparent 65%);}
 .badge{display:inline-flex;align-items:center;gap:7px;background:var(--pud);border:1px solid rgba(139,106,240,0.28);border-radius:100px;padding:5px 15px;font-size:10.5px;font-weight:600;color:rgba(160,130,255,0.9);letter-spacing:.09em;text-transform:uppercase;margin-bottom:1.5rem;animation:badgePop .5s var(--ease) .1s both;}
 .badge-dot{width:6px;height:6px;border-radius:50%;background:var(--pu);animation:pulseDot 2s infinite;}
@@ -169,6 +177,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;min-hei
     <div class="hero-glow"></div>
     <div class="badge"><span class="badge-dot"></span>Classic Strategy Game</div>
     <h1>Tic<span class="xt">X</span> Tac<span class="ot">O</span> Toe</h1>
+     <div class="tagline">Python GUI · Web Edition · by Meet Maru 🐉 </div>
     <p class="hero-sub">A polished, modern take on the timeless classic. Play with a friend or challenge the AI.</p>
     <div class="hero-stats">
       <div class="stat"><div class="stat-n">3</div><div class="stat-l">Difficulties</div></div>
@@ -196,9 +205,9 @@ body{background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;min-hei
     <div class="card" id="diff-card" style="display:none;">
       <div class="card-label">AI difficulty</div>
       <div class="diff-grid">
-        <button class="diff-btn" data-d="easy" onclick="pickDiff(this)"><span class="d-icon">😊</span>Easy</button>
-        <button class="diff-btn active" data-d="moderate" onclick="pickDiff(this)"><span class="d-icon">🎯</span>Moderate</button>
-        <button class="diff-btn" data-d="hard" onclick="pickDiff(this)"><span class="d-icon">💀</span>Hard</button>
+        <button class="diff-btn" data-d="easy" onclick="pickDiff(this)">Easy</button>
+        <button class="diff-btn active" data-d="moderate" onclick="pickDiff(this)">Moderate</button>
+        <button class="diff-btn" data-d="hard" onclick="pickDiff(this)">Hard</button>
       </div>
     </div>
 
@@ -282,9 +291,9 @@ let scores={X:0,O:0,draw:0},round=1,aiLock=false;
 const WINS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
 const DIFF_META={
-  easy:  {cls:'di-easy',   icon:'😊', label:'Easy'},
-  moderate:{cls:'di-moderate',icon:'🎯', label:'Moderate'},
-  hard:  {cls:'di-hard',   icon:'💀', label:'Hard'},
+  easy:  {cls:'di-easy', label:'Easy'},
+  moderate:{cls:'di-moderate', label:'Moderate'},
+  hard:  {cls:'di-hard', label:'Hard'},
 };
 
 function pickMode(el){
@@ -434,7 +443,7 @@ function drawLine(line){
 function showOv(winner,name){
   const icon=document.getElementById('res-icon'),title=document.getElementById('res-title'),sub=document.getElementById('res-sub');
   if(winner){
-    icon.textContent=winner==='X'?'🏅':'🥇';icon.style.background=winner==='X'?'var(--xd)':'var(--od)';
+    icon.textContent=winner==='X'?'🏅';icon.style.background=winner==='X'?'var(--xd)':'var(--od)';
     title.textContent=`${name} Wins!`;title.style.color=winner==='X'?'var(--x)':'var(--o)';sub.textContent='Well Played';
   } else {
     icon.textContent='🤝';icon.style.background='var(--goldd)';
