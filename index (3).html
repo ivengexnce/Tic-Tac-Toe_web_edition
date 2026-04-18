@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic Tac Toe — Python GUI Web Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.14);
+    --x-color: #ff4d6d;
+    --x-glow: rgba(255,77,109,0.35);
+    --o-color: #4df0ff;
+    --o-glow: rgba(77,240,255,0.35);
+    --win-color: #f5c542;
+    --win-glow: rgba(245,197,66,0.4);
+    --text: #f0f0f8;
+    --muted: rgba(240,240,248,0.45);
+    --accent: #7c6fff;
+    --accent-glow: rgba(124,111,255,0.3);
+    --cell-size: clamp(90px, 20vw, 130px);
+    --gap: clamp(6px, 1.5vw, 10px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 3rem;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -40%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(ellipse, rgba(124,111,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  /* ---- HEADER ---- */
+  .header {
+    text-align: center;
+    animation: fadeDown 0.5s ease both;
+  }
+  .header h1 {
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    background: linear-gradient(135deg, #f0f0f8 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header .tagline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* ---- SETUP SCREEN ---- */
+  #setup-screen {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fadeUp 0.4s ease both 0.1s;
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .card-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .mode-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .mode-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 0.75rem;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+  }
+  .mode-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .mode-btn.active {
+    background: rgba(124,111,255,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 16px var(--accent-glow);
+  }
+
+  .diff-btns {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .diff-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 0.65rem 0.5rem;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+  }
+  .diff-btn:hover { border-color: rgba(255,255,255,0.3); }
+  .diff-btn.active[data-diff="easy"] { background: rgba(77,240,100,0.12); border-color: #4df064; color: #4df064; box-shadow: 0 0 14px rgba(77,240,100,0.2); }
+  .diff-btn.active[data-diff="moderate"] { background: rgba(245,197,66,0.12); border-color: var(--win-color); color: var(--win-color); box-shadow: 0 0 14px var(--win-glow); }
+  .diff-btn.active[data-diff="hard"] { background: rgba(255,77,109,0.12); border-color: var(--x-color); color: var(--x-color); box-shadow: 0 0 14px var(--x-glow); }
+
+  .names-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .name-group { display: flex; flex-direction: column; gap: 5px; }
+  .name-group label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .name-group label.x-label { color: var(--x-color); }
+  .name-group label.o-label { color: var(--o-color); }
+
+  .name-input {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    outline: none;
+    transition: border-color 0.18s;
+    width: 100%;
+  }
+  .name-input:focus { border-color: var(--accent); }
+
+  .start-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    border: none;
+    border-radius: 12px;
+    padding: 1rem;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.18s;
+    box-shadow: 0 4px 24px var(--accent-glow);
+  }
+  .start-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px var(--accent-glow);
+  }
+  .start-btn:active { transform: translateY(0); }
+
+  /* ---- GAME SCREEN ---- */
+  #game-screen {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  /* scoreboard */
+  .scoreboard {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+  .score-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .score-card.x-card { border-left: 3px solid var(--x-color); }
+  .score-card.o-card { border-right: 3px solid var(--o-color); }
+  .score-card.active-turn { background: var(--bg3); transform: translateY(-2px); }
+  .score-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .score-val {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .score-card.x-card .score-val { color: var(--x-color); }
+  .score-card.o-card .score-val { color: var(--o-color); }
+
+  .score-mid {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 0.75rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+  .score-mid .draw-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .score-mid .draw-val {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--win-color);
+  }
+
+  /* status */
+  .status-bar {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    text-align: center;
+    min-height: 1.2em;
+    transition: color 0.2s;
+  }
+  .status-bar.x-turn { color: var(--x-color); }
+  .status-bar.o-turn { color: var(--o-color); }
+  .status-bar.win-status { color: var(--win-color); font-weight: 600; }
+
+  /* board */
+  .board-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, var(--cell-size));
+    grid-template-rows: repeat(3, var(--cell-size));
+    gap: var(--gap);
+    background: var(--bg3);
+    border-radius: 18px;
+    padding: var(--gap);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 40px rgba(0,0,0,0.4);
+  }
+
+  .cell {
+    background: var(--bg2);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .cell:hover:not(.taken) { border-color: var(--border2); transform: scale(1.03); }
+  .cell:hover:not(.taken)::before { opacity: 1; }
+  .cell.taken { cursor: default; }
+  .cell.win-cell {
+    border-color: var(--win-color);
+    background: rgba(245,197,66,0.08);
+    box-shadow: 0 0 20px var(--win-glow), inset 0 0 20px rgba(245,197,66,0.05);
+    animation: winPulse 0.5s ease both;
+  }
+
+  .cell svg {
+    width: 52%;
+    height: 52%;
+    animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  }
+
+  /* X mark */
+  .x-mark line {
+    stroke: var(--x-color);
+    stroke-width: 5;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 6px var(--x-color));
+  }
+
+  /* O mark */
+  .o-mark circle {
+    stroke: var(--o-color);
+    stroke-width: 5;
+    fill: none;
+    filter: drop-shadow(0 0 6px var(--o-color));
+  }
+
+  /* win line overlay */
+  .win-line-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* controls */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .ctrl-btn {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 0.7rem;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .ctrl-btn:hover { background: var(--bg3); border-color: rgba(255,255,255,0.25); }
+  #sound-btn.muted { color: var(--muted); }
+  .back-btn { grid-column: span 2; }
+  .back-btn:hover { border-color: var(--x-color); color: var(--x-color); }
+
+  /* result overlay */
+  .result-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    backdrop-filter: blur(4px);
+  }
+  .result-overlay.show {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .result-card {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 2rem 2.5rem;
+    text-align: center;
+    transform: scale(0.8);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 300px;
+    width: 90%;
+  }
+  .result-overlay.show .result-card { transform: scale(1); }
+  .result-emoji { font-size: 3rem; margin-bottom: 0.5rem; }
+  .result-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.02em;
+  }
+  .result-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    margin-bottom: 1.5rem;
+  }
+  .result-btns { display: flex; flex-direction: column; gap: 8px; }
+  .result-play-again {
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.18s;
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+  .result-play-again:hover { transform: translateY(-2px); }
+  .result-menu {
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 0.7rem;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .result-menu:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
+
+  /* ai thinking indicator */
+  .thinking {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--o-color);
+    letter-spacing: 0.1em;
+    display: none;
+    align-items: center;
+    gap: 6px;
+  }
+  .thinking.show { display: flex; }
+  .thinking-dots span {
+    display: inline-block;
+    width: 4px; height: 4px;
+    background: var(--o-color);
+    border-radius: 50%;
+    animation: bounce 0.8s ease infinite;
+  }
+  .thinking-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .thinking-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+  /* sound bars icon */
+  .sound-bars {
+    display: flex; align-items: flex-end; gap: 2px; height: 14px;
+  }
+  .sound-bars span {
+    width: 3px; background: currentColor; border-radius: 2px;
+    animation: soundAnim 0.8s ease infinite;
+  }
+  .sound-bars span:nth-child(1) { height: 6px; animation-delay: 0s; }
+  .sound-bars span:nth-child(2) { height: 10px; animation-delay: 0.1s; }
+  .sound-bars span:nth-child(3) { height: 8px; animation-delay: 0.2s; }
+  .sound-bars span:nth-child(4) { height: 12px; animation-delay: 0.05s; }
+  #sound-btn.muted .sound-bars span { animation: none; height: 6px; opacity: 0.4; }
+
+  /* animations */
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+  @keyframes winPulse { from { transform: scale(0.9); } to { transform: scale(1); } }
+  @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @keyframes soundAnim { 0%, 100% { transform: scaleY(0.6); } 50% { transform: scaleY(1); } }
+  @keyframes drawLine { from { stroke-dashoffset: 600; } to { stroke-dashoffset: 0; } }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Tic Tac Toe</h1>
+    <div class="tagline">Python GUI · Web Edition · by Meet Maru</div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <div id="setup-screen">
+    <div class="card">
+      <div class="card-label">Game Mode</div>
+      <div class="mode-btns">
+        <button class="mode-btn active" data-mode="pvp">👥 Player vs Player</button>
+        <button class="mode-btn" data-mode="pvai">🤖 Player vs AI</button>
+      </div>
+    </div>
+
+    <div class="card" id="diff-card" style="display:none">
+      <div class="card-label">AI Difficulty</div>
+      <div class="diff-btns">
+        <button class="diff-btn" data-diff="easy">😊 Easy</button>
+        <button class="diff-btn active" data-diff="moderate">🧐 Moderate</button>
+        <button class="diff-btn" data-diff="hard">💀 Hard</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Player Names</div>
+      <div class="names-row">
+        <div class="name-group">
+          <label class="x-label">✕ Player X</label>
+          <input class="name-input" id="name-x" type="text" placeholder="Player X" maxlength="12" value="Player X">
+        </div>
+        <div class="name-group" id="name-o-group">
+          <label class="o-label">○ Player O</label>
+          <input class="name-input" id="name-o" type="text" placeholder="Player O" maxlength="12" value="Player O">
+        </div>
+      </div>
+    </div>
+
+    <button class="start-btn" id="start-btn">Start Game →</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen">
+
+    <div class="scoreboard">
+      <div class="score-card x-card" id="score-x">
+        <div class="score-name" id="score-x-name">Player X</div>
+        <div class="score-val" id="score-x-val">0</div>
+      </div>
+      <div class="score-mid">
+        <div class="draw-label">Draw</div>
+        <div class="draw-val" id="score-draw">0</div>
+      </div>
+      <div class="score-card o-card" id="score-o">
+        <div class="score-name" id="score-o-name">Player O</div>
+        <div class="score-val" id="score-o-val">0</div>
+      </div>
+    </div>
+
+    <div class="status-bar" id="status-bar">X's turn</div>
+
+    <div class="thinking" id="thinking-ind">
+      <span>AI thinking</span>
+      <div class="thinking-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+      <svg class="win-line-svg" id="win-line-svg" style="display:none"></svg>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn" id="sound-btn">
+        <div class="sound-bars"><span></span><span></span><span></span><span></span></div>
+        Sound On
+      </button>
+      <button class="ctrl-btn" id="restart-btn">↺ Restart</button>
+      <button class="ctrl-btn back-btn" id="back-btn">← Back to Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT OVERLAY -->
+<div class="result-overlay" id="result-overlay">
+  <div class="result-card">
+    <div class="result-emoji" id="result-emoji">🏆</div>
+    <div class="result-title" id="result-title">Player X Wins!</div>
+    <div class="result-subtitle" id="result-subtitle">WELL PLAYED</div>
+    <div class="result-btns">
+      <button class="result-play-again" id="play-again-btn">Play Again</button>
+      <button class="result-menu" id="menu-btn">Back to Menu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Audio Engine ──────────────────────────────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx = null;
+let soundOn = true;
+
+function getCtx() {
+  if (!ctx) ctx = new AudioCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+
+function playTone(freq, type, duration, vol, delay = 0) {
+  if (!soundOn) return;
+  try {
+    const c = getCtx();
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.connect(gain); gain.connect(c.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, c.currentTime + delay);
+    gain.gain.setValueAtTime(vol, c.currentTime + delay);
+    gain.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + delay + duration);
+    osc.start(c.currentTime + delay);
+    osc.stop(c.currentTime + delay + duration);
+  } catch(e){}
+}
+
+function soundClick(isX) {
+  playTone(isX ? 440 : 330, 'sine', 0.12, 0.3);
+  playTone(isX ? 660 : 495, 'sine', 0.08, 0.15, 0.04);
+}
+
+function soundWin() {
+  [523, 659, 784, 1047].forEach((f, i) => playTone(f, 'sine', 0.25, 0.25, i * 0.1));
+}
+
+function soundDraw() {
+  [330, 294, 262].forEach((f, i) => playTone(f, 'triangle', 0.2, 0.2, i * 0.1));
+}
+
+function soundHover() {
+  playTone(520, 'sine', 0.05, 0.08);
+}
+
+function soundStart() {
+  [262, 330, 392, 523].forEach((f, i) => playTone(f, 'sine', 0.18, 0.2, i * 0.07));
+}
+
+// ── State ─────────────────────────────────────────────────────────────────
+let board = Array(9).fill(null);
+let currentPlayer = 'X';
+let gameActive = false;
+let mode = 'pvp';
+let difficulty = 'moderate';
+let nameX = 'Player X';
+let nameO = 'Player O';
+let scores = { X: 0, O: 0, draw: 0 };
+let aiLocked = false;
+
+const wins = [
+  [0,1,2],[3,4,5],[6,7,8],
+  [0,3,6],[1,4,7],[2,5,8],
+  [0,4,8],[2,4,6]
+];
+
+// ── DOM refs ──────────────────────────────────────────────────────────────
+const setupScreen = document.getElementById('setup-screen');
+const gameScreen = document.getElementById('game-screen');
+const boardEl = document.getElementById('board');
+const statusBar = document.getElementById('status-bar');
+const thinkingInd = document.getElementById('thinking-ind');
+const resultOverlay = document.getElementById('result-overlay');
+const winLineSvg = document.getElementById('win-line-svg');
+
+// ── Setup UI ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    const diffCard = document.getElementById('diff-card');
+    const nameOGroup = document.getElementById('name-o-group');
+    if (mode === 'pvai') {
+      diffCard.style.display = 'block';
+      document.getElementById('name-o').value = 'AI';
+      nameOGroup.querySelector('label').textContent = '○ AI Name';
+    } else {
+      diffCard.style.display = 'none';
+      document.getElementById('name-o').value = 'Player O';
+      nameOGroup.querySelector('label').textContent = '○ Player O';
+    }
+  });
+});
+
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    difficulty = btn.dataset.diff;
+  });
+});
+
+document.getElementById('start-btn').addEventListener('click', startGame);
+
+// ── Game Start ────────────────────────────────────────────────────────────
+function startGame() {
+  nameX = document.getElementById('name-x').value.trim() || 'Player X';
+  nameO = document.getElementById('name-o').value.trim() || (mode === 'pvai' ? 'AI' : 'Player O');
+  scores = { X: 0, O: 0, draw: 0 };
+  updateScoreDisplay();
+  document.getElementById('score-x-name').textContent = nameX;
+  document.getElementById('score-o-name').textContent = nameO;
+  setupScreen.style.display = 'none';
+  gameScreen.style.display = 'flex';
+  soundStart();
+  resetBoard();
+}
+
+// ── Board ─────────────────────────────────────────────────────────────────
+function buildBoard() {
+  boardEl.innerHTML = '';
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.i = i;
+    cell.addEventListener('click', () => onCellClick(i));
+    cell.addEventListener('mouseenter', () => {
+      if (!board[i] && gameActive && !aiLocked) soundHover();
+    });
+    boardEl.appendChild(cell);
+  }
+}
+
+function renderBoard() {
+  document.querySelectorAll('.cell').forEach((cell, i) => {
+    cell.innerHTML = '';
+    cell.classList.remove('taken', 'win-cell');
+    if (board[i] === 'X') {
+      cell.classList.add('taken');
+      cell.innerHTML = `<svg viewBox="0 0 60 60" class="x-mark"><line x1="12" y1="12" x2="48" y2="48"/><line x1="48" y1="12" x2="12" y2="48"/></svg>`;
+    } else if (board[i] === 'O') {
+      cell.classList.add('taken');
+      cell.innerHTML = `<svg viewBox="0 0 60 60" class="o-mark"><circle cx="30" cy="30" r="18"/></svg>`;
+    }
+  });
+}
+
+function resetBoard() {
+  board = Array(9).fill(null);
+  currentPlayer = 'X';
+  gameActive = true;
+  aiLocked = false;
+  winLineSvg.style.display = 'none';
+  winLineSvg.innerHTML = '';
+  buildBoard();
+  renderBoard();
+  updateStatus();
+  updateTurnHighlight();
+}
+
+// ── Click Handler ─────────────────────────────────────────────────────────
+function onCellClick(i) {
+  if (!gameActive || board[i] || aiLocked) return;
+  if (mode === 'pvai' && currentPlayer === 'O') return;
+  makeMove(i);
+}
+
+function makeMove(i) {
+  board[i] = currentPlayer;
+  renderBoard();
+  soundClick(currentPlayer === 'X');
+
+  const result = checkResult();
+  if (result) {
+    endGame(result);
+    return;
+  }
+
+  currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+  updateStatus();
+  updateTurnHighlight();
+
+  if (mode === 'pvai' && currentPlayer === 'O' && gameActive) {
+    aiLocked = true;
+    thinkingInd.classList.add('show');
+    const delay = difficulty === 'easy' ? 300 : difficulty === 'moderate' ? 500 : 700;
+    setTimeout(() => {
+      thinkingInd.classList.remove('show');
+      const move = getAIMove();
+      aiLocked = false;
+      makeMove(move);
+    }, delay);
+  }
+}
+
+// ── Status ────────────────────────────────────────────────────────────────
+function updateStatus() {
+  const name = currentPlayer === 'X' ? nameX : nameO;
+  statusBar.textContent = `${name}'s turn`;
+  statusBar.className = 'status-bar ' + (currentPlayer === 'X' ? 'x-turn' : 'o-turn');
+}
+
+function updateTurnHighlight() {
+  document.getElementById('score-x').classList.toggle('active-turn', currentPlayer === 'X');
+  document.getElementById('score-o').classList.toggle('active-turn', currentPlayer === 'O');
+}
+
+// ── Win Check ─────────────────────────────────────────────────────────────
+function checkResult() {
+  for (const [a,b,c] of wins) {
+    if (board[a] && board[a] === board[b] && board[b] === board[c]) {
+      return { winner: board[a], line: [a,b,c] };
+    }
+  }
+  if (board.every(v => v)) return { winner: null };
+  return null;
+}
+
+function endGame(result) {
+  gameActive = false;
+  if (result.winner) {
+    highlightWin(result.line);
+    scores[result.winner]++;
+    updateScoreDisplay();
+    const winnerName = result.winner === 'X' ? nameX : nameO;
+    statusBar.textContent = `${winnerName} wins! 🎉`;
+    statusBar.className = 'status-bar win-status';
+    soundWin();
+    setTimeout(() => showResult(result.winner, winnerName), 900);
+  } else {
+    scores.draw++;
+    updateScoreDisplay();
+    statusBar.textContent = "It's a draw!";
+    statusBar.className = 'status-bar';
+    soundDraw();
+    setTimeout(() => showResult(null, null), 700);
+  }
+}
+
+function highlightWin(line) {
+  line.forEach(i => {
+    document.querySelectorAll('.cell')[i].classList.add('win-cell');
+  });
+  drawWinLine(line);
+}
+
+function drawWinLine(line) {
+  const boardRect = boardEl.getBoundingClientRect();
+  const wrapRect = document.querySelector('.board-wrap').getBoundingClientRect();
+  const cells = document.querySelectorAll('.cell');
+  const getCenter = (i) => {
+    const r = cells[i].getBoundingClientRect();
+    return {
+      x: r.left + r.width/2 - wrapRect.left,
+      y: r.top + r.height/2 - wrapRect.top
+    };
+  };
+  const s = getCenter(line[0]);
+  const e = getCenter(line[2]);
+  winLineSvg.style.display = 'block';
+  winLineSvg.setAttribute('viewBox', `0 0 ${wrapRect.width} ${wrapRect.height}`);
+  const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  l.setAttribute('x1', s.x); l.setAttribute('y1', s.y);
+  l.setAttribute('x2', e.x); l.setAttribute('y2', e.y);
+  l.setAttribute('stroke', 'var(--win-color)');
+  l.setAttribute('stroke-width', '4');
+  l.setAttribute('stroke-linecap', 'round');
+  l.setAttribute('stroke-dasharray', '600');
+  l.setAttribute('stroke-dashoffset', '600');
+  l.style.filter = 'drop-shadow(0 0 6px var(--win-color))';
+  l.style.animation = 'drawLine 0.4s ease forwards 0.1s';
+  winLineSvg.appendChild(l);
+}
+
+// ── Score Display ─────────────────────────────────────────────────────────
+function updateScoreDisplay() {
+  document.getElementById('score-x-val').textContent = scores.X;
+  document.getElementById('score-o-val').textContent = scores.O;
+  document.getElementById('score-draw').textContent = scores.draw;
+}
+
+// ── Result Overlay ────────────────────────────────────────────────────────
+function showResult(winner, name) {
+  const emoji = document.getElementById('result-emoji');
+  const title = document.getElementById('result-title');
+  const sub = document.getElementById('result-subtitle');
+  if (winner) {
+    emoji.textContent = winner === 'X' ? '🔴' : '🔵';
+    title.textContent = `${name} Wins!`;
+    title.style.color = winner === 'X' ? 'var(--x-color)' : 'var(--o-color)';
+    sub.textContent = 'WELL PLAYED';
+  } else {
+    emoji.textContent = '🤝';
+    title.textContent = "It's a Draw!";
+    title.style.color = 'var(--win-color)';
+    sub.textContent = 'EQUAL MATCH';
+  }
+  resultOverlay.classList.add('show');
+}
+
+document.getElementById('play-again-btn').addEventListener('click', () => {
+  resultOverlay.classList.remove('show');
+  resetBoard();
+});
+
+document.getElementById('menu-btn').addEventListener('click', goToMenu);
+
+// ── Controls ──────────────────────────────────────────────────────────────
+document.getElementById('restart-btn').addEventListener('click', () => {
+  resultOverlay.classList.remove('show');
+  resetBoard();
+});
+
+document.getElementById('back-btn').addEventListener('click', goToMenu);
+
+function goToMenu() {
+  resultOverlay.classList.remove('show');
+  gameScreen.style.display = 'none';
+  setupScreen.style.display = 'flex';
+}
+
+document.getElementById('sound-btn').addEventListener('click', () => {
+  soundOn = !soundOn;
+  const btn = document.getElementById('sound-btn');
+  btn.classList.toggle('muted', !soundOn);
+  btn.querySelector('.sound-bars').nextSibling.textContent = soundOn ? ' Sound On' : ' Sound Off';
+  // fix: update text node
+  btn.childNodes[1].textContent = soundOn ? ' Sound On' : ' Sound Off';
+  if(soundOn) soundClick(true);
+});
+
+// ── AI ────────────────────────────────────────────────────────────────────
+function getAIMove() {
+  if (difficulty === 'easy') return randomMove();
+  if (difficulty === 'moderate') return Math.random() < 0.5 ? (minimaxMove() ?? randomMove()) : randomMove();
+  return minimaxMove() ?? randomMove();
+}
+
+function randomMove() {
+  const empty = board.map((v,i) => v ? null : i).filter(v => v !== null);
+  return empty[Math.floor(Math.random() * empty.length)];
+}
+
+function minimaxMove() {
+  let best = -Infinity, move = null;
+  for (let i = 0; i < 9; i++) {
+    if (!board[i]) {
+      board[i] = 'O';
+      const score = minimax(board, 0, false, -Infinity, Infinity);
+      board[i] = null;
+      if (score > best) { best = score; move = i; }
+    }
+  }
+  return move;
+}
+
+function minimax(b, depth, isMax, alpha, beta) {
+  const result = checkBoardResult(b);
+  if (result === 'O') return 10 - depth;
+  if (result === 'X') return depth - 10;
+  if (b.every(v => v)) return 0;
+
+  if (isMax) {
+    let best = -Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (!b[i]) {
+        b[i] = 'O';
+        best = Math.max(best, minimax(b, depth+1, false, alpha, beta));
+        b[i] = null;
+        alpha = Math.max(alpha, best);
+        if (beta <= alpha) break;
+      }
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (!b[i]) {
+        b[i] = 'X';
+        best = Math.min(best, minimax(b, depth+1, true, alpha, beta));
+        b[i] = null;
+        beta = Math.min(beta, best);
+        if (beta <= alpha) break;
+      }
+    }
+    return best;
+  }
+}
+
+function checkBoardResult(b) {
+  for (const [a,c,d] of wins) {
+    if (b[a] && b[a] === b[c] && b[c] === b[d]) return b[a];
+  }
+  return null;
+}
+
+// fix sound btn text on init
+document.getElementById('sound-btn').innerHTML = `
+  <div class="sound-bars"><span></span><span></span><span></span><span></span></div>
+  Sound On`;
+</script>
+</body>
+</html>
