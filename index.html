@@ -549,8 +549,9 @@
 
 <div class="container">
   <div class="header">
-    <h1>Tic Tac Toe</h1>
-    <div class="tagline">Python GUI · Web Edition · by Meet Maru</div>
+    <h1>Tic Tac Toe </h1>
+    <h2>Kya Soch rhe ho?</h2>
+    <div class="tagline">Python GUI · Web Edition · by Meet Maru 🐉</div>
   </div>
 
   <!-- SETUP SCREEN -->
@@ -566,8 +567,8 @@
     <div class="card" id="diff-card" style="display:none">
       <div class="card-label">AI Difficulty</div>
       <div class="diff-btns">
-        <button class="diff-btn" data-diff="easy">😊 Easy</button>
-        <button class="diff-btn active" data-diff="moderate">🧐 Moderate</button>
+        <button class="diff-btn" data-diff="easy"> Easy</button>
+        <button class="diff-btn active" data-diff="moderate"> Moderate</button>
         <button class="diff-btn" data-diff="hard">💀 Hard</button>
       </div>
     </div>
@@ -933,7 +934,7 @@ function showResult(winner, name) {
   const title = document.getElementById('result-title');
   const sub = document.getElementById('result-subtitle');
   if (winner) {
-    emoji.textContent = winner === 'X' ? '🔴' : '🔵';
+    emoji.textContent = winner === 'X' ? '🏅' : '🔵';
     title.textContent = `${name} Wins!`;
     title.style.color = winner === 'X' ? 'var(--x-color)' : 'var(--o-color)';
     sub.textContent = 'WELL PLAYED';
